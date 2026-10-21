@@ -12,7 +12,7 @@ function createTracker({ dataDir, onStart, onEnd, onTick }) {
   const FILE = path.join(dataDir, "sessoes.json");
   let sessions = []; try { sessions = JSON.parse(fs.readFileSync(FILE, "utf8")).map(({ g, s, e }) => ({ g, s, e })); } catch { /* primeira vez */ }
   let dirs = []; // [{ id, dir }] em minúsculas, com a barra no fim
-  const active = new Map(); // id -> { s, last, miss }
+  const active = new Map(); // id -> { s, last, miss, exes }
   let proc = null, stopped = false, lastSave = 0;
 
   const persist = () => {
@@ -32,15 +32,15 @@ function createTracker({ dataDir, onStart, onEnd, onTick }) {
   }
   function handle(line) {
     if (!line.startsWith("P:")) return;
-    const now = Date.now(), running = new Set();
+    const now = Date.now(), running = new Map(); // id -> nomes dos .exe do jogo abertos agora
     for (const p of line.slice(2).split("|")) {
       const lp = p.toLowerCase();
       const hit = dirs.find((d) => lp.startsWith(d.dir));
-      if (hit) running.add(hit.id);
+      if (hit) (running.get(hit.id) || running.set(hit.id, new Set()).get(hit.id)).add(lp.slice(lp.lastIndexOf("\\") + 1));
     }
-    for (const id of running) {
+    for (const [id, exes] of running) {
       const a = active.get(id);
-      if (a) { a.last = now; a.miss = 0; } else { active.set(id, { s: now, last: now, miss: 0 }); onStart && onStart(id); }
+      if (a) { a.last = now; a.miss = 0; for (const e of exes) a.exes.add(e); } else { active.set(id, { s: now, last: now, miss: 0, exes }); onStart && onStart(id); }
     }
     for (const [id, a] of active) if (!running.has(id) && ++a.miss >= 2) close(id, a); // fechou mesmo (não foi só uma troca de processo)
     if (active.size && now - lastSave > 60000) persist();
@@ -55,7 +55,7 @@ function createTracker({ dataDir, onStart, onEnd, onTick }) {
     proc.on("exit", () => { proc = null; if (!stopped) setTimeout(start, 5000); });
   }
   function stop() { stopped = true; for (const [id, a] of [...active]) close(id, a); if (proc) proc.kill(); }
-  const now = () => [...active.entries()].map(([id, a]) => ({ id, since: a.s }));
+  const now = () => [...active.entries()].map(([id, a]) => ({ id, since: a.s, exes: [...a.exes] }));
   return { setGames, start, stop, now, sessions: () => [...sessions, ...[...active.entries()].map(([g, a]) => ({ g, s: a.s, e: Date.now(), live: true }))] };
 }
 

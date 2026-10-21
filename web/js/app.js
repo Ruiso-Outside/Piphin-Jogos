@@ -17,7 +17,7 @@ const ago = (t) => {
 const dateBR = (t) => new Date(t).toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
 const WD = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-const S = { tab: "library", view: null, data: null, info: {}, q: "", launcher: "all", sort: "recent", favOnly: false, prefs: null, pickOpts: { stale: false, fav: false }, picking: false };
+const S = { tab: "library", view: null, data: null, info: {}, perf: {}, q: "", launcher: "all", sort: "recent", favOnly: false, prefs: null, pickOpts: { stale: false, fav: false }, picking: false };
 const G = () => (S.data ? S.data.games : []);
 const visible = () => G().filter((g) => !g.hidden);
 const P = (id) => (S.data && S.data.stats.perGame[id]) || { total: 0, tracked: 0, sessions: 0, avg: 0, longest: 0, lastPlayed: 0, last30: [] };
@@ -84,7 +84,13 @@ function refreshLive() {
 
 // ---------------------------------------------------------------- navegação
 $$(".p-subnav [data-tab]").forEach((b) => (b.onclick = () => { S.tab = b.dataset.tab; S.view = null; render(); $("#content").scrollTop = 0; }));
-function openGame(id) { S.view = id; render(); $("#content").scrollTop = 0; loadInfo(id); }
+function openGame(id) { S.view = id; render(); $("#content").scrollTop = 0; loadInfo(id); loadPerf(id); }
+// desempenho de cada partida, medido pelo InfoHardware (outro módulo do Hub)
+async function loadPerf(id) {
+  S.perf[id] = S.perf[id] || "loading";
+  try { S.perf[id] = await call("perf", id); } catch (e) { S.perf[id] = { ok: false, error: e.message }; }
+  if (S.view === id) render();
+}
 async function loadInfo(id) {
   if (S.info[id] !== undefined) return;
   S.info[id] = "loading";
@@ -92,7 +98,8 @@ async function loadInfo(id) {
   if (S.view === id) render();
 }
 function render() {
-  $$(".p-subnav [data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === S.tab && !S.view));
+  tip.hidden = true; // a tela foi redesenhada: a dica antiga não aponta para mais nada
+  $(".p-subnav [data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === S.tab && !S.view));
   refreshLive();
   const c = $("#content");
   if (!S.data) { c.innerHTML = `<div class="loading"><span class="spin"></span><div><b>Procurando seus jogos...</b><span class="faint">Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar e Xbox</span></div></div>`; return; }
@@ -195,7 +202,32 @@ function gamePage(id) {
           <dt>Pasta</dt><dd class="path"><a href="#" data-act="folder">${esc(g.dir)}</a></dd></dl>
       </section>
     </div>
+    ${perfPanel(id)}
     ${info === "loading" ? `<section class="panel"><div class="row"><span class="spin"></span><span class="muted">Buscando informações na loja...</span></div></section>` : info ? about(info) : ""}`;
+}
+const n0 = (v) => (typeof v === "number" && isFinite(v) ? Math.round(v).toLocaleString("pt-BR") : "—");
+function perfPanel(id) {
+  const p = S.perf[id];
+  const head = `<div class="ph"><h3><i class="i i-activity"></i> Desempenho nas partidas</h3><span class="faint">medido pelo InfoHardware</span></div>`;
+  if (!p || p === "loading") return `<section class="panel">${head}<div class="row"><span class="spin"></span><span class="muted">Perguntando ao InfoHardware...</span></div></section>`;
+  if (!p.ok) return p.missing
+    ? `<section class="panel perf-promo">${head}<div class="promo"><i class="i i-monitor"></i><div><b>Veja o FPS e as temperaturas de cada partida</b><span>Instale o <b>InfoHardware</b> na Loja do Piphin Hub: ele mostra um overlay por cima do jogo, liga sozinho quando você abre um jogo e guarda o desempenho de cada partida aqui.</span></div></div></section>`
+    : `<section class="panel">${head}<p class="faint">Não deu para falar com o InfoHardware agora (${esc(p.error)}).</p></section>`;
+  const s = p.summary || {}, list = p.sessions || [];
+  if (!list.length) return `<section class="panel">${head}<p class="faint">Nenhuma partida medida ainda. No InfoHardware, aba <b>Overlay</b>, ligue <b>Ligar sozinho quando um jogo abrir</b>: na próxima partida o FPS e as temperaturas aparecem aqui.</p></section>`;
+  const maxFps = Math.max(1, ...list.map((x) => x.fps_avg || 0));
+  const hot = (t, lim) => (t >= lim ? "bad" : t >= lim - 8 ? "warn" : "");
+  return `<section class="panel">${head}
+    <div class="perf-tiles">
+      <div><span>FPS médio</span><b>${n0(s.fps_avg)}</b><em>${s.sessions} ${s.sessions === 1 ? "partida medida" : "partidas medidas"}</em></div>
+      <div><span>1% low</span><b>${n0(s.low1_avg)}</b><em>os momentos mais travados</em></div>
+      <div class="${hot(s.cpu_temp_max, 90)}"><span>CPU mais quente</span><b>${s.cpu_temp_max ? n0(s.cpu_temp_max) + " °C" : "—"}</b><em>${s.cpu_temp_max >= 90 ? "muito quente" : s.cpu_temp_max >= 82 ? "quente" : s.cpu_temp_max ? "tranquilo" : "sem sensor"}</em></div>
+      <div class="${hot(s.gpu_temp_max, 85)}"><span>GPU mais quente</span><b>${s.gpu_temp_max ? n0(s.gpu_temp_max) + " °C" : "—"}</b><em>${s.gpu_temp_max >= 85 ? "muito quente" : s.gpu_temp_max >= 77 ? "quente" : s.gpu_temp_max ? "tranquilo" : "sem sensor"}</em></div>
+    </div>
+    ${s.limit ? `<div class="banner info"><i class="i i-info"></i><div>${esc(s.limit)}</div></div>` : ""}
+    <div class="perf-list">${list.slice(0, 8).map((x) => `<div class="pr" data-tip="<b>${esc(new Date(x.start).toLocaleString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}</b><br>${hm(x.minutes)} · mín ${n0(x.fps_min)} FPS<br>CPU ${n0(x.cpu_load_avg)}% · GPU ${n0(x.gpu_load_avg)}%">
+      <span class="pr-d">${dateBR(Date.parse(x.start))}</span><span class="pr-bar"><span style="width:${((x.fps_avg || 0) / maxFps) * 100}%"></span></span><b>${n0(x.fps_avg)} FPS</b><span class="faint">1% ${n0(x.low1_avg)} · ${x.cpu_temp_max ? n0(x.cpu_temp_max) + "°" : "—"} / ${x.gpu_temp_max ? n0(x.gpu_temp_max) + "°" : "—"}</span></div>`).join("")}</div>
+  </section>`;
 }
 function about(info) {
   return `<section class="panel"><div class="about-head"><h3>Sobre o jogo</h3>${info.metacritic ? `<span class="meta ${info.metacritic.score >= 75 ? "hi" : info.metacritic.score >= 50 ? "md" : "lo"}" data-tip="Nota no Metacritic">${info.metacritic.score}</span>` : ""}</div>

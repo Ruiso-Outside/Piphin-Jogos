@@ -192,6 +192,35 @@ exports.activate = (ctx) => {
   setInterval(() => { if (Date.now() - lastScan > 30 * 60000) scan().catch(() => {}); }, 10 * 60000).unref();
   ctx.onStop(() => tracker.stop());
 
+  // ---------------------------------------------------------------- outros módulos (pelo servidor de ferramentas do Hub)
+  // O InfoHardware mede FPS e temperaturas de cada partida; aqui só pedimos o resumo dele.
+  function callTool(name, args = {}) {
+    const u = process.env.PIPHIN_TOOLS_URL;
+    if (!u) return Promise.reject(Object.assign(new Error("Hub antigo (precisa do 1.5.0)"), { code: "NOHUB" }));
+    const body = JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "tools/call", params: { name, arguments: args } }), url = new URL(u);
+    return new Promise((resolve, reject) => {
+      const req = http.request({ host: url.hostname, port: url.port, path: url.pathname, method: "POST", timeout: 20000, headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) } }, (res) => {
+        let t = ""; res.setEncoding("utf8"); res.on("data", (d) => (t += d));
+        res.on("end", () => {
+          try {
+            const j = JSON.parse(t);
+            if (j.error) return reject(Object.assign(new Error(j.error.message), { code: /desconhecida/i.test(j.error.message) ? "MISSING" : "RPC" }));
+            const text = j.result.content[0].text;
+            if (j.result.isError) return reject(Object.assign(new Error(text), { code: /desconhecida/i.test(text) ? "MISSING" : "TOOL" }));
+            resolve(JSON.parse(text));
+          } catch (e) { reject(e); }
+        });
+      });
+      req.on("timeout", () => req.destroy(new Error("O InfoHardware não respondeu")));
+      req.on("error", reject); req.end(body);
+    });
+  }
+  ctx.handle("perf", async (id) => {
+    const g = find(id);
+    try { return { ok: true, ...(await callTool("infohardware_game_performance", { game_id: g.id, name: displayName(g) })) }; }
+    catch (e) { return { ok: false, missing: e.code === "MISSING" || e.code === "NOHUB", error: e.message }; }
+  });
+
   // ---------------------------------------------------------------- ferramentas para a IA (module.json "tools")
   const h = (m) => +(m / 60).toFixed(1);
   const day = (t) => (t ? new Date(t).toISOString().slice(0, 10) : null);
@@ -220,6 +249,12 @@ exports.activate = (ctx) => {
       this_week_hours: h(stats.thisWeek), last_week_hours: h(stats.lastWeek), days_played: stats.daysPlayed, streak_days: stats.streak, best_streak_days: stats.bestStreak,
       favorite_hour: stats.tracked ? `${peak}h` : null, favorite_weekday: stats.tracked ? wd[stats.byWeekday.indexOf(Math.max(...stats.byWeekday))] : null,
       longest_session: stats.longest && { game: name(stats.longest.id), hours: h(stats.longest.minutes), date: day(stats.longest.at) }, top_games: top };
+  });
+  // o que está sendo jogado agora (o InfoHardware usa para ligar o overlay e medir o desempenho de cada jogo)
+  ctx.handle("tool:now_playing", async () => {
+    if (!games.length) await scan();
+    return { playing: tracker.now().map((l) => { const g = games.find((x) => x.id === l.id); return { game_id: l.id, name: g ? displayName(g) : l.id, store: g ? NAMES[g.launcher] : "", since: new Date(l.since).toISOString(), minutes: Math.round((Date.now() - l.since) / 60000), exes: l.exes }; }),
+      note: "Atualizado a cada 15 segundos enquanto o Piphin Hub está aberto." };
   });
   ctx.handle("tool:launch_game", async (a = {}) => {
     if (!games.length) await scan();

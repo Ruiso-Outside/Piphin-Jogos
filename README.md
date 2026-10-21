@@ -38,7 +38,8 @@ Todos os jogos instalados no PC num só lugar, com tempo de jogo, estatísticas 
   - **perfil de jogador** com 9 conquistas (Coruja da madrugada, Maratonista, Em chamas...)
 - **O que jogar?**: uma roleta que sorteia entre os seus jogos, com mais chance para os que você não abre há tempo
 - **Espaço**: quanto cada jogo ocupa e quais estão parados há meses (desinstalar pela própria Steam)
-- **IA**: com o Piphin LLM, a IA vê seus jogos e estatísticas e abre um jogo (com a sua confirmação)
+- **Desempenho nas partidas** (com o [InfoHardware](https://github.com/Ruiso-Outside/InfoHardware)): FPS médio, 1% low, temperaturas e o que está segurando o FPS em cada partida, na página do jogo. O InfoHardware usa o Piphin Jogos para ligar o overlay de FPS sozinho quando um jogo abre.
+- **IA**: com o Piphin LLM, a IA vê seus jogos, estatísticas e o que está sendo jogado agora, e abre um jogo (com a sua confirmação)
 
 Tudo é só leitura: o Piphin Jogos não muda nada nas lojas nem nos jogos.
 
