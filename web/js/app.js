@@ -62,6 +62,8 @@ $("#lightbox").onclick = () => ($("#lightbox").hidden = true);
 
 // capa desenhada para jogos sem arte: cor tirada do nome + ícone do jogo
 function hue(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+// fundo da faixa de destaque para jogos sem imagem (cores calculadas aqui: o CSS não aceita essa conta dentro do var())
+const fallbackBg = (g) => { const h = hue(g.name); return `radial-gradient(90% 120% at 85% 20%, hsl(${h} 75% 45%), transparent 70%), linear-gradient(135deg, hsl(${h} 60% 34%), hsl(${(h + 40) % 360} 60% 16%))`; };
 const genCover = (g) => `<div class="gencover" style="--h:${hue(g.name)}">${g.icon ? `<img src="${esc(g.icon)}" alt="">` : `<i class="i i-gamepad-2"></i>`}<b>${esc(g.name)}</b></div>`;
 const coverHtml = (g) => (g.cover ? `<img class="cv" src="${esc(g.cover)}" data-fallback="${esc(g.id)}" loading="lazy" alt="">` : genCover(g));
 
@@ -136,7 +138,7 @@ function library() {
 }
 function continueHero(g, more) {
   const p = P(g.id), live = isLive(g.id);
-  return `<section class="cont" ${g.hero ? `style="--bg:url('${esc(g.hero)}')"` : `style="--h:${hue(g.name)}"`}>
+  return `<section class="cont" ${g.hero ? `style="--bg:url('${esc(g.hero)}')"` : `style="--bg:${fallbackBg(g)}"`}>
     <div class="cont-in">
       <span class="kicker">${live ? `<span class="pulse"></span>Jogando agora` : "Continuar jogando"}</span>
       ${g.logo ? `<img class="logo" src="${esc(g.logo)}" alt="${esc(g.name)}" data-logo>` : ""}<h1 class="cont-name" ${g.logo ? "hidden" : ""}>${esc(g.name)}</h1>
@@ -173,7 +175,7 @@ function gamePage(id) {
     ["trophy", "Maior sessão", p.longest ? hm(p.longest) : "—", ""],
     ["hard-drive", "No disco", gb(g.size), g.sizePending ? "calculando..." : ""],
   ];
-  return `<section class="ghero" ${g.hero ? `style="--bg:url('${esc(g.hero)}')"` : `style="--h:${hue(g.name)}"`}>
+  return `<section class="ghero" ${g.hero ? `style="--bg:url('${esc(g.hero)}')"` : `style="--bg:${fallbackBg(g)}"`}>
       <button class="btn glass sm back" data-act="back"><i class="i i-chevron-left"></i>Voltar</button>
       <div class="ghero-in">
         ${g.logo ? `<img class="logo" src="${esc(g.logo)}" alt="${esc(g.name)}" data-logo>` : ""}<h1 class="cont-name" ${g.logo ? "hidden" : ""}>${esc(g.name)}</h1>

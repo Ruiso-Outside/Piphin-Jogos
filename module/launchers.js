@@ -29,8 +29,9 @@ async function steam() {
   if (!root || !exists(root)) root = ["C:\\Program Files (x86)\\Steam", "C:\\Program Files\\Steam"].find(exists);
   if (!root) return { games: [], root: null };
   root = path.resolve(root);
+  // o caminho do libraryfolders.vdf substitui o do registro: vem com as maiúsculas certas (o registro guarda tudo minúsculo)
   const libs = new Map([[norm(root), root]]);
-  try { const lf = vdf(fs.readFileSync(path.join(root, "steamapps", "libraryfolders.vdf"), "utf8")); for (const v of Object.values(lower(lf).libraryfolders || {})) if (v && v.path) libs.set(norm(v.path), path.resolve(v.path)); } // com as maiúsculas certas (o registro guarda tudo minúsculo) catch { /* biblioteca única */ }
+  try { const lf = vdf(fs.readFileSync(path.join(root, "steamapps", "libraryfolders.vdf"), "utf8")); for (const v of Object.values(lower(lf).libraryfolders || {})) if (v && v.path) libs.set(norm(v.path), path.resolve(v.path)); } catch { /* biblioteca única */ }
   // tempo de jogo e última vez: localconfig.vdf de cada conta (fica com o maior valor)
   const play = {};
   try {

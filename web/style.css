@@ -40,7 +40,7 @@ select { height: 32px; border-radius: 9px; border: 1px solid var(--p-line-2); ba
 
 /* ------------------------------------------------------------------ continuar jogando */
 .cont { position: relative; display: flex; align-items: flex-end; gap: 20px; min-height: 280px; padding: 26px; border-radius: 22px; overflow: hidden; border: 1px solid var(--p-line); margin-bottom: 22px;
-  background: linear-gradient(90deg, rgba(8, 7, 13, .92) 0%, rgba(8, 7, 13, .55) 45%, rgba(8, 7, 13, .1) 100%), linear-gradient(0deg, rgba(8, 7, 13, .8), transparent 55%), var(--bg, linear-gradient(135deg, hsl(var(--h) 60% 30%), hsl(calc(var(--h) + 40) 60% 14%))) center / cover; }
+  background: linear-gradient(90deg, rgba(8, 7, 13, .92) 0%, rgba(8, 7, 13, .55) 45%, rgba(8, 7, 13, .1) 100%), linear-gradient(0deg, rgba(8, 7, 13, .8), transparent 55%), var(--bg) center / cover; }
 .cont-in { position: relative; display: grid; gap: 10px; justify-items: start; max-width: 520px; flex: 1; }
 .kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fed7aa; }
 .logo { max-width: 340px; max-height: 120px; object-fit: contain; object-position: left bottom; filter: drop-shadow(0 0 1px rgba(255, 255, 255, .5)) drop-shadow(0 6px 20px rgba(0, 0, 0, .6)); }
@@ -83,7 +83,7 @@ select { height: 32px; border-radius: 9px; border: 1px solid var(--p-line-2); ba
 
 /* ------------------------------------------------------------------ página do jogo */
 .ghero { position: relative; min-height: 340px; margin: -20px -26px 0; padding: 20px 26px 26px; display: flex; flex-direction: column; justify-content: space-between;
-  background: linear-gradient(0deg, var(--p-bg) 0%, rgba(8, 7, 13, .35) 55%, rgba(8, 7, 13, .2) 100%), var(--bg, linear-gradient(135deg, hsl(var(--h) 60% 30%), hsl(calc(var(--h) + 40) 60% 14%))) center 25% / cover; }
+  background: linear-gradient(0deg, var(--p-bg) 0%, rgba(8, 7, 13, .35) 55%, rgba(8, 7, 13, .2) 100%), var(--bg) center 25% / cover; }
 .ghero .back { align-self: flex-start; }
 .ghero-in { display: grid; gap: 16px; justify-items: start; }
 .ghero .logo { max-height: 140px; max-width: 420px; }
