@@ -1,0 +1,13 @@
+{
+  "name": "piphin-jogos",
+  "productName": "Piphin Jogos",
+  "version": "1.0.0",
+  "description": "Piphin Jogos: todos os jogos instalados no PC num só lugar, com estatísticas de tempo de jogo; módulo do Piphin Hub",
+  "author": "Piphin Studio",
+  "private": true,
+  "scripts": {
+    "icons": "node scripts/make-icons.js",
+    "icon": "node scripts/run-electron.js scripts/make-icon.js",
+    "module": "node scripts/make-module.js"
+  }
+}

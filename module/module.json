@@ -1,0 +1,37 @@
+{
+  "id": "jogos",
+  "name": "Piphin Jogos",
+  "version": "0.0.0",
+  "description": "Todos os jogos instalados no PC num só lugar (Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar, Xbox), com tempo de jogo, estatísticas e sorteio do que jogar.",
+  "main": "backend.js",
+  "ui": "web/index.html",
+  "icon": "icons/jogos.png",
+  "accent": "#f97316",
+  "minHub": "1.4.0",
+  "tools": [
+    {
+      "name": "list_games",
+      "title": "Ver os jogos instalados",
+      "readOnly": true,
+      "description": "Lista os jogos instalados no PC (de todas as lojas) com loja, horas jogadas no total, última vez que jogou, tamanho no disco e o que está sendo jogado agora.",
+      "input": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "gaming_stats",
+      "title": "Estatísticas de jogo",
+      "readOnly": true,
+      "description": "Resumo dos hábitos de jogo: horas totais, esta semana x semana passada, dias seguidos jogando, horário e dia da semana favoritos, maior sessão, jogos mais jogados e espaço usado.",
+      "input": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "launch_game",
+      "title": "Abrir um jogo",
+      "description": "Abre um jogo instalado pelo nome (parte do nome serve). A pessoa confirma numa janela antes.",
+      "input": {
+        "type": "object",
+        "properties": { "name": { "type": "string", "description": "Nome do jogo, como aparece em list_games" } },
+        "required": ["name"]
+      }
+    }
+  ]
+}
