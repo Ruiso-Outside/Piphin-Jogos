@@ -99,7 +99,7 @@ async function loadInfo(id) {
 }
 function render() {
   tip.hidden = true; // a tela foi redesenhada: a dica antiga não aponta para mais nada
-  $(".p-subnav [data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === S.tab && !S.view));
+  $$(".p-subnav [data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === S.tab && !S.view));
   refreshLive();
   const c = $("#content");
   if (!S.data) { c.innerHTML = `<div class="loading"><span class="spin"></span><div><b>Procurando seus jogos...</b><span class="faint">Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar e Xbox</span></div></div>`; return; }
