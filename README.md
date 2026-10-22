@@ -43,6 +43,9 @@ Todos os jogos instalados no PC num só lugar, com tempo de jogo, estatísticas 
 
 Tudo é só leitura: o Piphin Jogos não muda nada nas lojas nem nos jogos.
 
+## Mídia do Hub
+Com o Piphin Hub 1.7.0 ou mais novo, a página de cada jogo mostra os **prints e gravações** feitos nele com o Piphin Captura (pela Mídia do Hub), com o botão **Editar** que abre no Piphin Foto ou no Piphin Vídeo.
+
 ## Estrutura
 
 `module/`:

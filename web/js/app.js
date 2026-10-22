@@ -84,7 +84,13 @@ function refreshLive() {
 
 // ---------------------------------------------------------------- navegação
 $$(".p-subnav [data-tab]").forEach((b) => (b.onclick = () => { S.tab = b.dataset.tab; S.view = null; render(); $("#content").scrollTop = 0; }));
-function openGame(id) { S.view = id; render(); $("#content").scrollTop = 0; loadInfo(id); loadPerf(id); }
+function openGame(id) { S.view = id; render(); $("#content").scrollTop = 0; loadInfo(id); loadPerf(id); loadCaptures(id); }
+// prints e gravações feitos neste jogo (Piphin Captura, pela Mídia do Hub)
+S.caps = {};
+async function loadCaptures(id) {
+  try { S.caps[id] = await call("captures", id); } catch { S.caps[id] = null; }
+  if (S.view === id) render();
+}
 // desempenho de cada partida, medido pelo InfoHardware (outro módulo do Hub)
 async function loadPerf(id) {
   S.perf[id] = S.perf[id] || "loading";
@@ -203,6 +209,7 @@ function gamePage(id) {
       </section>
     </div>
     ${perfPanel(id)}
+    ${capturesPanel(id)}
     ${info === "loading" ? `<section class="panel"><div class="row"><span class="spin"></span><span class="muted">Buscando informações na loja...</span></div></section>` : info ? about(info) : ""}`;
 }
 const n0 = (v) => (typeof v === "number" && isFinite(v) ? Math.round(v).toLocaleString("pt-BR") : "—");
@@ -228,6 +235,20 @@ function perfPanel(id) {
     <div class="perf-list">${list.slice(0, 8).map((x) => `<div class="pr" data-tip="<b>${esc(new Date(x.start).toLocaleString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}</b><br>${hm(x.minutes)} · mín ${n0(x.fps_min)} FPS<br>CPU ${n0(x.cpu_load_avg)}% · GPU ${n0(x.gpu_load_avg)}%">
       <span class="pr-d">${dateBR(Date.parse(x.start))}</span><span class="pr-bar"><span style="width:${((x.fps_avg || 0) / maxFps) * 100}%"></span></span><b>${n0(x.fps_avg)} FPS</b><span class="faint">1% ${n0(x.low1_avg)} · ${x.cpu_temp_max ? n0(x.cpu_temp_max) + "°" : "—"} / ${x.gpu_temp_max ? n0(x.gpu_temp_max) + "°" : "—"}</span></div>`).join("")}</div>
   </section>`;
+}
+function capturesPanel(id) {
+  const c = S.caps[id];
+  if (!c || !c.ok) return "";
+  const head = `<div class="ph"><h3><i class="i i-camera"></i> Seus prints e gravações</h3>${c.items.length ? `<span class="faint">${c.items.length >= 24 ? "os 24 mais recentes" : c.items.length === 1 ? "1 captura" : c.items.length + " capturas"}</span>` : ""}</div>`;
+  if (!c.items.length) return `<section class="panel">${head}<p class="faint">Tire prints e grave as partidas com o <b>Piphin Captura</b> (PrintScreen e Alt+F9) enquanto joga: eles aparecem aqui, separados por jogo.</p></section>`;
+  return `<section class="panel">${head}<div class="caps">${c.items.map((x) => {
+    const op = (c.openers[x.kind] || [])[0];
+    return `<div class="cap" data-cap-show="${esc(x.path)}" title="${esc(x.title)} · mostrar na pasta">
+      ${x.thumb ? `<img src="${esc(x.thumb)}" alt="">` : `<i class="i i-${x.kind === "video" ? "film" : "image"}"></i>`}
+      ${x.kind === "video" ? `<span class="cap-t"><i class="i i-play"></i>${x.seconds ? `${Math.floor(x.seconds / 60)}:${String(Math.round(x.seconds % 60)).padStart(2, "0")}` : "vídeo"}</span>` : ""}
+      <span class="cap-d">${dateBR(Date.parse(x.at))}</span>
+      ${op ? `<button class="btn glass sm cap-ed" data-cap-open="${esc(op.id)}" data-path="${esc(x.path)}" title="Abrir no ${esc(op.name)}"><i class="i i-pencil"></i>Editar</button>` : ""}</div>`;
+  }).join("")}</div></section>`;
 }
 function about(info) {
   return `<section class="panel"><div class="about-head"><h3>Sobre o jogo</h3>${info.metacritic ? `<span class="meta ${info.metacritic.score >= 75 ? "hi" : info.metacritic.score >= 50 ? "md" : "lo"}" data-tip="Nota no Metacritic">${info.metacritic.score}</span>` : ""}</div>
@@ -402,6 +423,10 @@ function bind() {
   $$("img[data-logo]").forEach((im) => (im.onerror = () => { im.remove(); const n = $(".cont-name[hidden]"); if (n) n.hidden = false; }));
 }
 $("#content").addEventListener("click", guard(async (e) => {
+  const co = e.target.closest("[data-cap-open]");
+  if (co) { e.stopPropagation(); return call("capture-open", co.dataset.capOpen, co.dataset.path); }
+  const cs = e.target.closest("[data-cap-show]");
+  if (cs) return call("capture-show", cs.dataset.capShow);
   const t = e.target.closest("[data-play], [data-open], [data-act], [data-shot], [data-uninstall], [data-folder]"); if (!t) return;
   if (t.tagName === "A") e.preventDefault();
   if (t.dataset.play) { e.stopPropagation(); const g = byId(t.dataset.play); await call("launch", g.id); toast(`Abrindo ${g.name}...`, "ok"); return; }

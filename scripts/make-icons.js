@@ -10,7 +10,7 @@ if (!LUCIDE) throw new Error("lucide-static não encontrado (rode npm install no
 const OUT = path.join(__dirname, "..", "web", "icons.css");
 
 const NAMES = `
-gamepad-2 compass play library chart-column chart-pie trophy clock clock-3 calendar calendar-days hard-drive search star heart folder-open external-link refresh-cw x plus minus check chevron-right chevron-left chevron-down ellipsis-vertical eye eye-off dices sparkles flame moon sun sunrise timer history info circle-check triangle-alert trash-2 pencil settings bot zap crown medal target rocket swords layers-3 monitor cpu download store tag users zap-off shuffle arrow-up-down filter grid-3x3 list award activity hourglass sword
+gamepad-2 compass play library chart-column chart-pie trophy clock clock-3 calendar calendar-days hard-drive search star heart folder-open external-link refresh-cw x plus minus check chevron-right chevron-left chevron-down ellipsis-vertical eye eye-off dices sparkles flame moon sun sunrise timer history info circle-check triangle-alert trash-2 pencil settings bot zap crown medal target rocket swords layers-3 monitor cpu download store tag users zap-off shuffle arrow-up-down filter grid-3x3 list award activity hourglass sword camera film image
 `.split(/\s+/).filter(Boolean);
 
 const css = [`/* Piphin Jogos · ícones (Lucide ${require(path.join(LUCIDE, "package.json")).version}, ISC) · gerado por scripts/make-icons.js */`,

@@ -221,6 +221,19 @@ exports.activate = (ctx) => {
     catch (e) { return { ok: false, missing: e.code === "MISSING" || e.code === "NOHUB", error: e.message }; }
   });
 
+  // prints e gravações deste jogo (Piphin Captura, pela Mídia do Hub 1.7.0+)
+  const media = ctx.host.library || null;
+  ctx.handle("captures", async (id) => {
+    if (!media) return { ok: false, nohub: true };
+    const g = find(id);
+    const list = await media.list({ game: displayName(g), kinds: ["image", "video"], limit: 24 });
+    const thumbs = await Promise.all(list.map((x) => media.thumb(x.id, 360).catch(() => null)));
+    const openers = { image: await ctx.host.openers("image"), video: await ctx.host.openers("video") };
+    return { ok: true, openers, items: list.map((x, i) => ({ id: x.id, path: x.path, kind: x.kind, title: x.title, at: x.addedAt, seconds: x.duration, thumb: thumbs[i] })) };
+  });
+  ctx.handle("capture-open", (target, file) => ctx.host.openIn(target, { path: file }));
+  ctx.handle("capture-show", (file) => ctx.host.showItem(file));
+
   // ---------------------------------------------------------------- ferramentas para a IA (module.json "tools")
   const h = (m) => +(m / 60).toFixed(1);
   const day = (t) => (t ? new Date(t).toISOString().slice(0, 10) : null);

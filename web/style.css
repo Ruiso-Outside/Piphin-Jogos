@@ -247,3 +247,13 @@ button.hb { cursor: pointer; } .hb:hover { background: var(--p-hover); }
   .req-cols { grid-template-columns: 1fr; }
   .sp-cover { display: none; }
 }
+
+/* prints e gravações do jogo (Piphin Captura) */
+.caps { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 12px; }
+.cap { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; cursor: pointer; display: grid; place-items: center; color: var(--p-text-3); font-size: 22px; }
+.cap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .2s; }
+.cap:hover img { transform: scale(1.04); }
+.cap-t, .cap-d { position: absolute; bottom: 6px; font-size: 11px; background: rgba(0, 0, 0, .65); color: #fff; padding: 2px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
+.cap-t { right: 6px; } .cap-d { left: 6px; }
+.cap-ed { position: absolute; top: 6px; right: 6px; opacity: 0; transition: opacity .15s; }
+.cap:hover .cap-ed { opacity: 1; }
