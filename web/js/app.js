@@ -7,12 +7,16 @@ const call = async (ch, ...a) => { const r = await piphin.invoke(ch, ...a); if (
 const hm = (m) => { m = Math.round(m || 0); if (m < 60) return `${m} min`; const h = Math.floor(m / 60), r = m % 60; return h >= 100 || !r ? `${h.toLocaleString("pt-BR")} h` : `${h} h ${r} min`; };
 const hours = (m) => (m >= 600 ? Math.round(m / 60).toLocaleString("pt-BR") : (m / 60).toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
 const gb = (b) => (b >= 1e12 ? (b / 1e12).toLocaleString("pt-BR", { maximumFractionDigits: 2 }) + " TB" : b >= 1e9 ? (b / 1e9).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " GB" : b > 0 ? Math.round(b / 1e6) + " MB" : "—");
+// "há 5 dias" já sai traduzido (o Hub 1.8+ tem window.piphinT): vai dentro de frases maiores e o tradutor não traduz pedaços
+const T = (x) => (window.piphinT ? window.piphinT(x) : x);
 const ago = (t) => {
-  if (!t) return "nunca";
+  if (!t) return T("nunca");
   const day0 = (x) => { const d = new Date(x); d.setHours(0, 0, 0, 0); return d.getTime(); };
   const d = Math.round((day0(Date.now()) - day0(t)) / 86400000); // dias do calendário (ontem à noite é "ontem")
-  if (d <= 0) return "hoje"; if (d === 1) return "ontem"; if (d < 7) return `há ${d} dias`; if (d < 30) { const w = Math.floor(d / 7); return `há ${w} ${w === 1 ? "semana" : "semanas"}`; }
-  if (d < 365) { const m = Math.floor(d / 30); return `há ${m} ${m === 1 ? "mês" : "meses"}`; } const y = Math.floor(d / 365); return `há ${y} ${y === 1 ? "ano" : "anos"}`;
+  if (d <= 0) return T("hoje"); if (d === 1) return T("ontem"); if (d < 7) return T(`há ${d} dias`);
+  if (d < 30) { const w = Math.floor(d / 7); return T(w === 1 ? "há 1 semana" : `há ${w} semanas`); }
+  if (d < 365) { const m = Math.floor(d / 30); return T(m === 1 ? "há 1 mês" : `há ${m} meses`); }
+  const y = Math.floor(d / 365); return T(y === 1 ? "há 1 ano" : `há ${y} anos`);
 };
 const dateBR = (t) => new Date(t).toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
 const WD = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -306,11 +310,11 @@ function stats() {
   const noTrack = !s.tracked;
   return `<div class="hero-nums">
       <div class="hn big"><span>Tempo total de jogo</span><b>${hours(s.total)}<small> h</small></b><em>${top.length ? `${Math.round((top[0][1] / Math.max(1, s.total)) * 100)}% em ${esc(top[0][0].name)}` : "Jogue algo para começar"}</em></div>
-      <div class="hn"><span>Esta semana</span><b>${hm(s.thisWeek)}</b><em>${delta == null ? "semana passada: " + hm(s.lastWeek) : `${delta >= 0 ? "▲" : "▼"} ${Math.abs(delta)}% que a semana passada`}</em></div>
+      <div class="hn"><span>Esta semana</span><b>${hm(s.thisWeek)}</b><em>${delta == null ? `semana passada: ${hm(s.lastWeek)}` : `${delta >= 0 ? "▲" : "▼"} ${Math.abs(delta)}% que a semana passada`}</em></div>
       <div class="hn"><span>Sequência</span><b>${s.streak} ${s.streak === 1 ? "dia" : "dias"}</b><em>recorde: ${s.bestStreak} ${s.bestStreak === 1 ? "dia" : "dias"}</em></div>
       <div class="hn"><span>Jogos instalados</span><b>${gs.length}</b><em>${gb(gs.reduce((a, g) => a + g.size, 0))} no disco</em></div>
     </div>
-    ${noTrack ? `<div class="banner info"><i class="i i-info"></i><div><b>A contagem começou agora.</b> O tempo total vem da Steam; daqui em diante o Piphin Jogos conta as partidas de <b>qualquer loja</b> enquanto o Hub estiver aberto, e os gráficos de dias e horários vão se enchendo.${S.data.prefs.keepAlive ? "" : ` <a href="#" data-act="settings">Continuar contando com a janela fechada</a>.`}</div></div>` : ""}
+    ${noTrack ? `<div class="banner info"><i class="i i-info"></i><div><b>A contagem começou agora.</b> O tempo total vem da Steam; daqui em diante o Piphin Jogos conta as partidas de qualquer loja enquanto o Hub estiver aberto, e os gráficos de dias e horários vão se enchendo.${S.data.prefs.keepAlive ? "" : ` <a href="#" data-act="settings">Continuar contando com a janela fechada</a>.`}</div></div>` : ""}
     <section class="panel"><div class="ph"><h3>Seus dias de jogo</h3><span class="faint">últimos 6 meses · ${s.daysPlayed} ${s.daysPlayed === 1 ? "dia" : "dias"} com partidas</span></div>${heatmap(s.heat)}</section>
     <div class="two">
       <section class="panel"><h3>Mais jogados</h3>${top.length ? `<div class="hbars">${top.map(([g, m]) => `<button class="hb" data-open="${esc(g.id)}" data-tip="<b>${esc(g.name)}</b><br>${hm(m)}"><span class="hb-name">${esc(g.name)}</span><span class="hb-track"><span style="width:${(m / maxTop) * 100}%"></span></span><span class="hb-val">${hours(m)} h</span></button>`).join("")}</div>` : `<p class="faint">Nenhum tempo de jogo ainda.</p>`}</section>
