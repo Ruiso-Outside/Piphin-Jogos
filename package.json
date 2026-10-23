@@ -1,7 +1,7 @@
 {
   "name": "piphin-jogos",
   "productName": "Piphin Jogos",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Piphin Jogos: todos os jogos instalados no PC num só lugar, com estatísticas de tempo de jogo; módulo do Piphin Hub",
   "author": "Piphin Studio",
   "private": true,

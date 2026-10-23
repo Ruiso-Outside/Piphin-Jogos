@@ -11,8 +11,8 @@ const ago = (t) => {
   if (!t) return "nunca";
   const day0 = (x) => { const d = new Date(x); d.setHours(0, 0, 0, 0); return d.getTime(); };
   const d = Math.round((day0(Date.now()) - day0(t)) / 86400000); // dias do calendário (ontem à noite é "ontem")
-  if (d <= 0) return "hoje"; if (d === 1) return "ontem"; if (d < 7) return `há ${d} dias`; if (d < 30) return `há ${Math.floor(d / 7)} semana${d >= 14 ? "s" : ""}`;
-  if (d < 365) { const m = Math.floor(d / 30); return `há ${m} ${m === 1 ? "mês" : "meses"}`; } const y = Math.floor(d / 365); return `há ${y} ano${y > 1 ? "s" : ""}`;
+  if (d <= 0) return "hoje"; if (d === 1) return "ontem"; if (d < 7) return `há ${d} dias`; if (d < 30) { const w = Math.floor(d / 7); return `há ${w} ${w === 1 ? "semana" : "semanas"}`; }
+  if (d < 365) { const m = Math.floor(d / 30); return `há ${m} ${m === 1 ? "mês" : "meses"}`; } const y = Math.floor(d / 365); return `há ${y} ${y === 1 ? "ano" : "anos"}`;
 };
 const dateBR = (t) => new Date(t).toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
 const WD = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
