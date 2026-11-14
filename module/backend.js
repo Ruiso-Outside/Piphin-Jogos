@@ -12,7 +12,7 @@ const { createTracker } = require("./tracker");
 const { compute } = require("./stats");
 
 const MIME = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", ico: "image/x-icon", gif: "image/gif", bmp: "image/bmp" };
-const NAMES = { steam: "Steam", epic: "Epic Games", riot: "Riot Games", gog: "GOG", ubisoft: "Ubisoft", xbox: "Xbox", ea: "EA", battlenet: "Battle.net", rockstar: "Rockstar", other: "Outros", custom: "Adicionados por você" };
+const NAMES = { steam: "Steam", epic: "Epic Games", riot: "Riot Games", gog: "GOG", ubisoft: "Ubisoft", xbox: "Xbox", ea: "EA", battlenet: "Battle.net", rockstar: "Rockstar", lutris: "Lutris", amazon: "Amazon Games", other: "Outros", custom: "Adicionados por você" };
 
 exports.activate = (ctx) => {
   fs.mkdirSync(ctx.dataDir, { recursive: true });
@@ -108,7 +108,7 @@ exports.activate = (ctx) => {
         if (id) { g.artAppId = id; pushGames(); }
       }
       // ícone do .exe (para a capa desenhada dos jogos sem arte)
-      const need = games.filter((g) => g.art.icon && /\.exe$/i.test(g.art.icon) && !(prefs.games[g.id] || {}).iconFile && fs.existsSync(g.art.icon));
+      const need = process.platform !== "win32" ? [] : games.filter((g) => g.art.icon && /\.exe$/i.test(g.art.icon) && !(prefs.games[g.id] || {}).iconFile && fs.existsSync(g.art.icon));
       if (need.length) {
         fs.mkdirSync(ICONS, { recursive: true });
         const list = need.map((g) => `'${g.art.icon.replace(/'/g, "''")}'`).join(",");
@@ -134,10 +134,14 @@ exports.activate = (ctx) => {
 
   function launch(g) {
     const L = g.launch || {};
-    if (L.url) spawn(path.join(process.env.SystemRoot || "C:\\Windows", "System32", "rundll32.exe"), ["url.dll,FileProtocolHandler", L.url], { detached: true, stdio: "ignore" }).unref();
+    if (L.url && process.platform !== "win32") spawn("xdg-open", [L.url], { detached: true, stdio: "ignore" }).on("error", () => {}).unref(); // steam://, heroic://, lutris:
+    else if (L.url) spawn(path.join(process.env.SystemRoot || "C:\\Windows", "System32", "rundll32.exe"), ["url.dll,FileProtocolHandler", L.url], { detached: true, stdio: "ignore" }).unref();
     else if (L.exe) {
       if (!fs.existsSync(L.exe)) throw new Error("O programa do jogo não foi encontrado. Ele foi desinstalado ou mudou de pasta?");
-      spawn(L.exe, L.args || [], { cwd: L.cwd || path.dirname(L.exe), detached: true, stdio: "ignore" }).unref();
+      // Linux: .exe pelo Wine, .sh pelo bash (mesmo sem permissão de execução)
+      const [file, args] = process.platform === "win32" ? [L.exe, L.args || []] : /\.exe$/i.test(L.exe) ? ["wine", [L.exe, ...(L.args || [])]]
+        : /\.sh$/i.test(L.exe) ? ["bash", [L.exe, ...(L.args || [])]] : [L.exe, L.args || []];
+      spawn(file, args, { cwd: L.cwd || path.dirname(L.exe), detached: true, stdio: "ignore" }).on("error", (e) => ctx.log("não abriu", g.name, e.message)).unref();
     } else if (L.folder) ctx.host.openPath(L.folder);
     else throw new Error("Não sei como abrir este jogo");
     ctx.log("abrindo", g.name);
@@ -166,7 +170,9 @@ exports.activate = (ctx) => {
   });
   ctx.handle("reset-cover", (id) => { const o = prefs.games[id]; if (o) { delete o.cover; delete o.artAppId; } savePrefs(); pushGames(); enrich(); return true; });
   ctx.handle("add-game", async () => {
-    const list = await ctx.host.openDialog({ title: "Escolha o programa (.exe) do jogo", properties: ["openFile"], filters: [{ name: "Programas", extensions: ["exe", "lnk", "bat"] }] });
+    const list = process.platform === "win32"
+      ? await ctx.host.openDialog({ title: "Escolha o programa (.exe) do jogo", properties: ["openFile"], filters: [{ name: "Programas", extensions: ["exe", "lnk", "bat"] }] })
+      : await ctx.host.openDialog({ title: "Escolha o programa do jogo (executável, .sh ou .AppImage)", properties: ["openFile"] });
     if (!list || !list[0]) return null;
     const exe = list[0], dir = path.dirname(exe);
     if (dir.split(/[\\/]/).filter(Boolean).length < 2) throw new Error("Escolha o programa dentro da pasta do jogo (não direto na raiz do disco).");

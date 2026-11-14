@@ -1,3 +1,5 @@
+// Linux: lojas e textos do sistema (a versão Linux fica em português)
+const LINUX = /Linux/.test(navigator.userAgent);
 // Piphin Jogos · telas: biblioteca, página do jogo, estatísticas, sorteio ("O que jogar?") e espaço em disco.
 "use strict";
 const $ = (s, el = document) => el.querySelector(s);
@@ -112,7 +114,7 @@ function render() {
   $$(".p-subnav [data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === S.tab && !S.view));
   refreshLive();
   const c = $("#content");
-  if (!S.data) { c.innerHTML = `<div class="loading"><span class="spin"></span><div><b>Procurando seus jogos...</b><span class="faint">Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar e Xbox</span></div></div>`; return; }
+  if (!S.data) { c.innerHTML = `<div class="loading"><span class="spin"></span><div><b>Procurando seus jogos...</b><span class="faint">${(LINUX ? "Steam, Heroic (Epic, GOG, Amazon) e Lutris" : "Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar e Xbox")}</span></div></div>`; return; }
   const top = c.scrollTop, fid = document.activeElement && c.contains(document.activeElement) ? document.activeElement.id : "";
   c.innerHTML = S.view ? gamePage(S.view) : { library, stats, pick, space }[S.tab]();
   c.scrollTop = top;
@@ -133,7 +135,7 @@ function sorted(list) {
 }
 function library() {
   const all = visible();
-  if (!all.length) return `<div class="empty-box big"><i class="i i-gamepad-2"></i><b>Nenhum jogo encontrado</b><span>Procuramos na Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar e Xbox. Se o seu jogo é de outro lugar, adicione o programa dele.</span>
+  if (!all.length) return `<div class="empty-box big"><i class="i i-gamepad-2"></i><b>Nenhum jogo encontrado</b><span>Procuramos na ${(LINUX ? "Steam, Heroic (Epic, GOG, Amazon) e Lutris" : "Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar e Xbox")}. Se o seu jogo é de outro lugar, adicione o programa dele.</span>
     <div class="row"><button class="btn primary" data-act="add"><i class="i i-plus"></i>Adicionar um jogo</button><button class="btn" data-act="rescan"><i class="i i-refresh-cw"></i>Procurar de novo</button></div></div>`;
   const counts = {}; for (const g of all) counts[g.launcher] = (counts[g.launcher] || 0) + 1;
   const q = S.q.toLowerCase();
@@ -403,7 +405,7 @@ async function settings() {
   const hidden = G().filter((g) => g.hidden);
   openModal(`<h3>Configurações</h3><div class="set-list">
     <label class="swl row-set"><span class="switch"><input type="checkbox" id="sKeep" ${p.keepAlive ? "checked" : ""}><span></span></span><div><b>Contar com a janela fechada</b><span>Ao fechar a janela, o Hub fica perto do relógio e continua contando o tempo de jogo.</span></div></label>
-    <label class="swl row-set"><span class="switch"><input type="checkbox" id="sBoot" ${p.startWithWindows ? "checked" : ""}><span></span></span><div><b>Abrir o Hub com o Windows</b><span>Para não perder nenhuma partida.</span></div></label>
+    <label class="swl row-set"><span class="switch"><input type="checkbox" id="sBoot" ${p.startWithWindows ? "checked" : ""}><span></span></span><div><b>${LINUX ? "Abrir o Hub ao entrar no Linux" : "Abrir o Hub com o Windows"}</b><span>Para não perder nenhuma partida.</span></div></label>
     <label class="swl row-set"><span class="switch"><input type="checkbox" id="sNotify" ${p.notify ? "checked" : ""}><span></span></span><div><b>Resumo ao terminar de jogar</b><span>Uma notificação com o tempo da partida (a partir de 10 minutos).</span></div></label>
     ${hidden.length ? `<div class="hidden-list"><b>Jogos escondidos</b>${hidden.map((g) => `<div class="hl"><span>${esc(g.name)}</span><button class="btn sm" data-unhide="${esc(g.id)}"><i class="i i-eye"></i>Mostrar</button></div>`).join("")}</div>` : ""}
     </div><div class="modal-actions"><button class="btn primary" data-y>Pronto</button></div>`);

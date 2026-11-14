@@ -1,12 +1,18 @@
 // Piphin Jogos · encontra os jogos instalados em cada loja/launcher (só leitura: arquivos e registro).
 // Cada jogo: { id, launcher, name, dir, size, launch, steamAppId, lastPlayed, steamMinutes, updatedAt, art: { cover, hero, logo, header, icon } }
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
+const { execFile } = require("child_process");
 const sys = require("./sys");
+
+const IS_WIN = process.platform === "win32";
+const HOME = os.homedir();
 
 const exists = (p) => { try { return !!p && fs.existsSync(p); } catch { return false; } };
 const mtime = (p) => { try { return fs.statSync(p).mtimeMs; } catch { return 0; } };
-const norm = (p) => path.resolve(String(p || "")).replace(/[\\/]+$/, "").toLowerCase();
+// Windows: caminhos sem diferença de maiúsculas; Linux: com diferença
+const norm = (p) => { const r = path.resolve(String(p || "")).replace(/[\\/]+$/, ""); return IS_WIN ? r.toLowerCase() : r; };
 
 // ---------------------------------------------------------------- VDF (formato de texto da Steam)
 function vdf(text) {
@@ -24,9 +30,13 @@ const lower = (o) => { const r = {}; for (const k in o || {}) r[k.toLowerCase()]
 
 // ---------------------------------------------------------------- Steam
 const STEAM_SKIP = /redistributable|steam linux runtime|proton |steamworks|steamvr performance test/i;
+// Linux: Steam nativa, Flatpak e Snap
+const STEAM_LINUX = () => [path.join(HOME, ".steam", "steam"), path.join(HOME, ".local", "share", "Steam"),
+  path.join(HOME, ".var", "app", "com.valvesoftware.Steam", ".local", "share", "Steam"), path.join(HOME, "snap", "steam", "common", ".local", "share", "Steam")];
 async function steam() {
-  let root = await sys.regGet("HKCU\\Software\\Valve\\Steam", "SteamPath");
-  if (!root || !exists(root)) root = ["C:\\Program Files (x86)\\Steam", "C:\\Program Files\\Steam"].find(exists);
+  let root = IS_WIN ? await sys.regGet("HKCU\\Software\\Valve\\Steam", "SteamPath") : null;
+  if (!IS_WIN) root = STEAM_LINUX().map((p) => { try { return fs.realpathSync(p); } catch { return null; } }).find((p) => p && exists(path.join(p, "steamapps")));
+  else if (!root || !exists(root)) root = ["C:\\Program Files (x86)\\Steam", "C:\\Program Files\\Steam"].find(exists);
   if (!root) return { games: [], root: null };
   root = path.resolve(root);
   // o caminho do libraryfolders.vdf substitui o do registro: vem com as maiúsculas certas (o registro guarda tudo minúsculo)
@@ -158,13 +168,56 @@ async function registry() {
   return games;
 }
 
+// ---------------------------------------------------------------- Linux: Heroic (Epic, GOG, Amazon) e Lutris
+const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return null; } };
+const heroicUrl = (app, runner) => `heroic://launch?appName=${encodeURIComponent(app)}&runner=${runner}`;
+function heroic() {
+  const roots = [path.join(HOME, ".config", "heroic"), path.join(HOME, ".var", "app", "com.heroicgameslauncher.hgl", "config", "heroic")].filter(exists);
+  const games = [];
+  for (const root of roots) {
+    // Epic (legendary): { appName: { title, install_path, install_size } }
+    const leg = readJson(path.join(root, "legendaryConfig", "legendary", "installed.json")) || {};
+    for (const [app, g] of Object.entries(leg)) {
+      if (!g || !g.install_path || !exists(g.install_path) || g.is_dlc) continue;
+      games.push({ id: "epic:" + app, launcher: "epic", name: g.title || app, dir: g.install_path, size: Number(g.install_size) || 0, launch: { url: heroicUrl(app, "legendary") }, art: {} });
+    }
+    // GOG: { installed: [{ appName, install_path }] }; o nome vem do cache da biblioteca
+    const lib = readJson(path.join(root, "store_cache", "gog_library.json")) || {};
+    const names = new Map((lib.games || []).map((x) => [String(x.app_name || x.appName), x.title]));
+    for (const g of (readJson(path.join(root, "gog_store", "installed.json")) || {}).installed || []) {
+      if (!g || !g.install_path || !exists(g.install_path)) continue;
+      games.push({ id: "gog:" + g.appName, launcher: "gog", name: names.get(String(g.appName)) || path.basename(g.install_path), dir: g.install_path, size: 0, launch: { url: heroicUrl(g.appName, "gog") }, art: {} });
+    }
+    // Amazon (nile): [{ id, path, size }]
+    const nile = readJson(path.join(root, "nile_config", "nile", "installed.json"));
+    for (const g of Array.isArray(nile) ? nile : []) {
+      if (!g || !g.path || !exists(g.path)) continue;
+      games.push({ id: "amazon:" + g.id, launcher: "amazon", name: path.basename(g.path), dir: g.path, size: Number(g.size) || 0, launch: { url: heroicUrl(g.id, "nile") }, art: {} });
+    }
+  }
+  return games;
+}
+// Lutris: a lista vem do próprio programa (sem o Lutris instalado, nada)
+function lutris() {
+  return new Promise((resolve) => {
+    execFile("lutris", ["--list-games", "--installed", "--json"], { timeout: 30000, maxBuffer: 16 * 1024 * 1024 }, (err, out) => {
+      if (err) return resolve([]);
+      const txt = String(out);
+      let list = []; try { list = JSON.parse(txt.slice(txt.indexOf("["))); } catch { return resolve([]); }
+      resolve(list.filter((g) => g && g.slug && g.directory && exists(g.directory)).map((g) => ({ id: "lutris:" + g.slug, launcher: "lutris", name: g.name || g.slug,
+        dir: g.directory, size: 0, launch: { url: "lutris:rungame/" + g.slug }, lastPlayed: Number(g.lastplayed || 0) * 1000 || 0, art: {} })));
+    });
+  });
+}
+
 // ---------------------------------------------------------------- tudo junto (sem repetir a mesma pasta)
 async function scanAll(custom = []) {
-  const [s, reg] = await Promise.all([steam(), registry()]);
-  const all = [...s.games, ...epic(), ...riot(), ...reg, ...custom.filter((c) => exists(c.dir))];
+  const [s, reg] = await Promise.all([steam(), IS_WIN ? registry() : Promise.resolve([])]);
+  const others = IS_WIN ? [...epic(), ...riot(), ...reg] : [...heroic(), ...(await lutris())];
+  const all = [...s.games, ...others, ...custom.filter((c) => exists(c.dir))];
   const seen = new Set(), out = [];
   for (const g of all) { const k = norm(g.dir); if (seen.has(k)) continue; seen.add(k); out.push(g); }
   return { games: out, steamRoot: s.root };
 }
 
-module.exports = { scanAll, steam, epic, riot, registry, vdf, norm };
+module.exports = { scanAll, steam, epic, riot, registry, heroic, lutris, vdf, norm };
