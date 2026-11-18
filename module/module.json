@@ -1,12 +1,12 @@
 {
   "id": "jogos",
-  "name": "Piphin Jogos",
+  "name": "Arasaka Arcade",
   "version": "0.0.0",
   "description": "Todos os jogos instalados no PC num só lugar (Steam, Epic, Riot, GOG, Ubisoft, EA, Battle.net, Rockstar, Xbox), com tempo de jogo, estatísticas e sorteio do que jogar.",
   "main": "backend.js",
   "ui": "web/index.html",
   "icon": "icons/jogos.png",
-  "accent": "#f97316",
+  "accent": "#ff0000",
   "minHub": "1.4.0",
   "tools": [
     {

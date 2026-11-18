@@ -55,7 +55,7 @@ exports.activate = (ctx) => {
     onEnd: (ses) => {
       ctx.emit("live", tracker.now()); pushGames();
       const g = games.find((x) => x.id === ses.g), min = Math.round((ses.e - ses.s) / 60000);
-      if (g && prefs.notify && min >= 10) ctx.host.notify("Piphin Jogos", `Você jogou ${fmtMin(min)} de ${displayName(g)}.`).catch(() => {});
+      if (g && prefs.notify && min >= 10) ctx.host.notify("Arasaka Arcade", `Você jogou ${fmtMin(min)} de ${displayName(g)}.`).catch(() => {});
     },
   });
   const fmtMin = (m) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`);
@@ -202,7 +202,7 @@ exports.activate = (ctx) => {
   // O InfoHardware mede FPS e temperaturas de cada partida; aqui só pedimos o resumo dele.
   function callTool(name, args = {}) {
     const u = process.env.PIPHIN_TOOLS_URL;
-    if (!u) return Promise.reject(Object.assign(new Error("Hub antigo (precisa do 1.5.0)"), { code: "NOHUB" }));
+    if (!u) return Promise.reject(Object.assign(new Error("Central antiga (precisa da 1.5.0)"), { code: "NOHUB" }));
     const body = JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "tools/call", params: { name, arguments: args } }), url = new URL(u);
     return new Promise((resolve, reject) => {
       const req = http.request({ host: url.hostname, port: url.port, path: url.pathname, method: "POST", timeout: 20000, headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) } }, (res) => {
@@ -217,7 +217,7 @@ exports.activate = (ctx) => {
           } catch (e) { reject(e); }
         });
       });
-      req.on("timeout", () => req.destroy(new Error("O InfoHardware não respondeu")));
+      req.on("timeout", () => req.destroy(new Error("O Arasaka Biomonitor não respondeu")));
       req.on("error", reject); req.end(body);
     });
   }
@@ -255,7 +255,7 @@ exports.activate = (ctx) => {
       games: pub.filter((g) => !g.hidden).map((g) => { const p = stats.perGame[g.id]; return { name: g.name, store: g.launcherName, hours_total: h(p.total), hours_counted_by_piphin: h(p.tracked), last_played: day(p.lastPlayed), size_gb: +(g.size / 1e9).toFixed(1), favorite: g.fav || undefined }; })
         .sort((a, b) => b.hours_total - a.hours_total),
       playing_now: live.map((l) => displayName(find(l.id))),
-      note: "hours_total usa o maior entre o tempo da Steam e o contado pelo Piphin Jogos (que conta jogos de qualquer loja enquanto o Hub está aberto).",
+      note: "hours_total usa o maior entre o tempo da Steam e o contado pelo Arasaka Arcade (que conta jogos de qualquer loja enquanto a Central está aberto).",
     };
   });
   ctx.handle("tool:gaming_stats", async () => {
@@ -273,7 +273,7 @@ exports.activate = (ctx) => {
   ctx.handle("tool:now_playing", async () => {
     if (!games.length) await scan();
     return { playing: tracker.now().map((l) => { const g = games.find((x) => x.id === l.id); return { game_id: l.id, name: g ? displayName(g) : l.id, store: g ? NAMES[g.launcher] : "", since: new Date(l.since).toISOString(), minutes: Math.round((Date.now() - l.since) / 60000), exes: l.exes }; }),
-      note: "Atualizado a cada 15 segundos enquanto o Piphin Hub está aberto." };
+      note: "Atualizado a cada 15 segundos enquanto a Arasaka Central está aberto." };
   });
   ctx.handle("tool:launch_game", async (a = {}) => {
     if (!games.length) await scan();

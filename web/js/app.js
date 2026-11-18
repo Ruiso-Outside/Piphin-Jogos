@@ -190,7 +190,7 @@ function gamePage(id) {
   const tiles = [
     ["clock", "Tempo total", hm(p.total), g.steamMinutes && p.tracked < g.steamMinutes ? "pela Steam" : "contado aqui"],
     ["history", "Última vez", ago(p.lastPlayed), p.lastPlayed ? new Date(p.lastPlayed).toLocaleDateString("pt-BR") : ""],
-    ["activity", "Sessões", p.sessions.toLocaleString("pt-BR"), p.sessions ? `média de ${hm(p.avg)}` : "contadas pelo Piphin"],
+    ["activity", "Sessões", p.sessions.toLocaleString("pt-BR"), p.sessions ? `média de ${hm(p.avg)}` : "contadas pelo Arcade"],
     ["trophy", "Maior sessão", p.longest ? hm(p.longest) : "—", ""],
     ["hard-drive", "No disco", gb(g.size), g.sizePending ? "calculando..." : ""],
   ];
@@ -206,7 +206,7 @@ function gamePage(id) {
     <div class="tiles">${tiles.map(([ic, l, v, s]) => `<div class="tile"><i class="i i-${ic}"></i><span>${l}</span><b>${esc(v)}</b><em>${esc(s)}</em></div>`).join("")}</div>
     <div class="two">
       <section class="panel"><h3>Últimos 30 dias</h3>
-        ${p.last30.some((v) => v) ? bars(p.last30, { labels }) + `<div class="axis"><span>${labels[0]}</span><span>hoje</span></div>` : `<p class="faint">${p.tracked ? "Sem partidas nos últimos 30 dias." : "O Piphin Jogos começa a contar suas partidas a partir de agora (enquanto o Hub estiver aberto). Volte depois de jogar!"}</p>`}
+        ${p.last30.some((v) => v) ? bars(p.last30, { labels }) + `<div class="axis"><span>${labels[0]}</span><span>hoje</span></div>` : `<p class="faint">${p.tracked ? "Sem partidas nos últimos 30 dias." : "O Arasaka Arcade começa a contar suas partidas a partir de agora (enquanto a Central estiver aberto). Volte depois de jogar!"}</p>`}
       </section>
       <section class="panel"><h3>Informações</h3>
         <dl class="kv2"><dt>Loja</dt><dd>${esc(g.launcherName)}</dd>
@@ -221,13 +221,13 @@ function gamePage(id) {
 const n0 = (v) => (typeof v === "number" && isFinite(v) ? Math.round(v).toLocaleString("pt-BR") : "—");
 function perfPanel(id) {
   const p = S.perf[id];
-  const head = `<div class="ph"><h3><i class="i i-activity"></i> Desempenho nas partidas</h3><span class="faint">medido pelo InfoHardware</span></div>`;
+  const head = `<div class="ph"><h3><i class="i i-activity"></i> Desempenho nas partidas</h3><span class="faint">medido pelo Arasaka Biomonitor</span></div>`;
   if (!p || p === "loading") return `<section class="panel">${head}<div class="row"><span class="spin"></span><span class="muted">Perguntando ao InfoHardware...</span></div></section>`;
   if (!p.ok) return p.missing
-    ? `<section class="panel perf-promo">${head}<div class="promo"><i class="i i-monitor"></i><div><b>Veja o FPS e as temperaturas de cada partida</b><span>Instale o <b>InfoHardware</b> na Loja do Piphin Hub: ele mostra um overlay por cima do jogo, liga sozinho quando você abre um jogo e guarda o desempenho de cada partida aqui.</span></div></div></section>`
-    : `<section class="panel">${head}<p class="faint">Não deu para falar com o InfoHardware agora (${esc(p.error)}).</p></section>`;
+    ? `<section class="panel perf-promo">${head}<div class="promo"><i class="i i-monitor"></i><div><b>Veja o FPS e as temperaturas de cada partida</b><span>Instale o <b>Arasaka Biomonitor</b> na Loja da Arasaka Central: ele mostra um overlay por cima do jogo, liga sozinho quando você abre um jogo e guarda o desempenho de cada partida aqui.</span></div></div></section>`
+    : `<section class="panel">${head}<p class="faint">Não deu para falar com o Arasaka Biomonitor agora (${esc(p.error)}).</p></section>`;
   const s = p.summary || {}, list = p.sessions || [];
-  if (!list.length) return `<section class="panel">${head}<p class="faint">Nenhuma partida medida ainda. No InfoHardware, aba <b>Overlay</b>, ligue <b>Ligar sozinho quando um jogo abrir</b>: na próxima partida o FPS e as temperaturas aparecem aqui.</p></section>`;
+  if (!list.length) return `<section class="panel">${head}<p class="faint">Nenhuma partida medida ainda. No Arasaka Biomonitor, aba <b>Overlay</b>, ligue <b>Ligar sozinho quando um jogo abrir</b>: na próxima partida o FPS e as temperaturas aparecem aqui.</p></section>`;
   const maxFps = Math.max(1, ...list.map((x) => x.fps_avg || 0));
   const hot = (t, lim) => (t >= lim ? "bad" : t >= lim - 8 ? "warn" : "");
   return `<section class="panel">${head}
@@ -246,7 +246,7 @@ function capturesPanel(id) {
   const c = S.caps[id];
   if (!c || !c.ok) return "";
   const head = `<div class="ph"><h3><i class="i i-camera"></i> Seus prints e gravações</h3>${c.items.length ? `<span class="faint">${c.items.length >= 24 ? "os 24 mais recentes" : c.items.length === 1 ? "1 captura" : c.items.length + " capturas"}</span>` : ""}</div>`;
-  if (!c.items.length) return `<section class="panel">${head}<p class="faint">Tire prints e grave as partidas com o <b>Piphin Captura</b> (PrintScreen e Alt+F9) enquanto joga: eles aparecem aqui, separados por jogo.</p></section>`;
+  if (!c.items.length) return `<section class="panel">${head}<p class="faint">Tire prints e grave as partidas com o <b>Arasaka Scanner</b> (PrintScreen e Alt+F9) enquanto joga: eles aparecem aqui, separados por jogo.</p></section>`;
   return `<section class="panel">${head}<div class="caps">${c.items.map((x) => {
     const op = (c.openers[x.kind] || [])[0];
     return `<div class="cap" data-cap-show="${esc(x.path)}" title="${esc(x.title)} · mostrar na pasta">
@@ -274,7 +274,7 @@ function gameMenu(anchor, g) {
     ...(g.store ? [{ label: "Página na loja Steam", icon: "store", fn: () => window.open(g.store) }] : []),
     "-",
     { label: "Esconder da biblioteca", icon: "eye-off", fn: async () => { await call("set", g.id, { hidden: true }); S.view = null; toast(`${g.name} escondido. Mostre de novo em Configurações.`); } },
-    ...(g.custom ? [{ label: "Tirar da biblioteca", icon: "trash-2", danger: true, fn: async () => { if (await confirmBox(`Tirar ${g.name}?`, "Só sai da lista do Piphin Jogos; nada é apagado do computador.", "Tirar", true)) { await call("remove-custom", g.id); S.view = null; render(); } } }] : []),
+    ...(g.custom ? [{ label: "Tirar da biblioteca", icon: "trash-2", danger: true, fn: async () => { if (await confirmBox(`Tirar ${g.name}?`, "Só sai da lista do Arasaka Arcade; nada é apagado do computador.", "Tirar", true)) { await call("remove-custom", g.id); S.view = null; render(); } } }] : []),
   ]);
 }
 
@@ -316,7 +316,7 @@ function stats() {
       <div class="hn"><span>Sequência</span><b>${s.streak} ${s.streak === 1 ? "dia" : "dias"}</b><em>recorde: ${s.bestStreak} ${s.bestStreak === 1 ? "dia" : "dias"}</em></div>
       <div class="hn"><span>Jogos instalados</span><b>${gs.length}</b><em>${gb(gs.reduce((a, g) => a + g.size, 0))} no disco</em></div>
     </div>
-    ${noTrack ? `<div class="banner info"><i class="i i-info"></i><div><b>A contagem começou agora.</b> O tempo total vem da Steam; daqui em diante o Piphin Jogos conta as partidas de qualquer loja enquanto o Hub estiver aberto, e os gráficos de dias e horários vão se enchendo.${S.data.prefs.keepAlive ? "" : ` <a href="#" data-act="settings">Continuar contando com a janela fechada</a>.`}</div></div>` : ""}
+    ${noTrack ? `<div class="banner info"><i class="i i-info"></i><div><b>A contagem começou agora.</b> O tempo total vem da Steam; daqui em diante o Arasaka Arcade conta as partidas de qualquer loja enquanto a Central estiver aberto, e os gráficos de dias e horários vão se enchendo.${S.data.prefs.keepAlive ? "" : ` <a href="#" data-act="settings">Continuar contando com a janela fechada</a>.`}</div></div>` : ""}
     <section class="panel"><div class="ph"><h3>Seus dias de jogo</h3><span class="faint">últimos 6 meses · ${s.daysPlayed} ${s.daysPlayed === 1 ? "dia" : "dias"} com partidas</span></div>${heatmap(s.heat)}</section>
     <div class="two">
       <section class="panel"><h3>Mais jogados</h3>${top.length ? `<div class="hbars">${top.map(([g, m]) => `<button class="hb" data-open="${esc(g.id)}" data-tip="<b>${esc(g.name)}</b><br>${hm(m)}"><span class="hb-name">${esc(g.name)}</span><span class="hb-track"><span style="width:${(m / maxTop) * 100}%"></span></span><span class="hb-val">${hours(m)} h</span></button>`).join("")}</div>` : `<p class="faint">Nenhum tempo de jogo ainda.</p>`}</section>
@@ -404,8 +404,8 @@ async function settings() {
   const p = await call("prefs");
   const hidden = G().filter((g) => g.hidden);
   openModal(`<h3>Configurações</h3><div class="set-list">
-    <label class="swl row-set"><span class="switch"><input type="checkbox" id="sKeep" ${p.keepAlive ? "checked" : ""}><span></span></span><div><b>Contar com a janela fechada</b><span>Ao fechar a janela, o Hub fica perto do relógio e continua contando o tempo de jogo.</span></div></label>
-    <label class="swl row-set"><span class="switch"><input type="checkbox" id="sBoot" ${p.startWithWindows ? "checked" : ""}><span></span></span><div><b>${LINUX ? "Abrir o Hub ao entrar no Linux" : "Abrir o Hub com o Windows"}</b><span>Para não perder nenhuma partida.</span></div></label>
+    <label class="swl row-set"><span class="switch"><input type="checkbox" id="sKeep" ${p.keepAlive ? "checked" : ""}><span></span></span><div><b>Contar com a janela fechada</b><span>Ao fechar a janela, a Central fica perto do relógio e continua contando o tempo de jogo.</span></div></label>
+    <label class="swl row-set"><span class="switch"><input type="checkbox" id="sBoot" ${p.startWithWindows ? "checked" : ""}><span></span></span><div><b>${LINUX ? "Abrir a Central ao entrar no Linux" : "Abrir a Central com o Windows"}</b><span>Para não perder nenhuma partida.</span></div></label>
     <label class="swl row-set"><span class="switch"><input type="checkbox" id="sNotify" ${p.notify ? "checked" : ""}><span></span></span><div><b>Resumo ao terminar de jogar</b><span>Uma notificação com o tempo da partida (a partir de 10 minutos).</span></div></label>
     ${hidden.length ? `<div class="hidden-list"><b>Jogos escondidos</b>${hidden.map((g) => `<div class="hl"><span>${esc(g.name)}</span><button class="btn sm" data-unhide="${esc(g.id)}"><i class="i i-eye"></i>Mostrar</button></div>`).join("")}</div>` : ""}
     </div><div class="modal-actions"><button class="btn primary" data-y>Pronto</button></div>`);
